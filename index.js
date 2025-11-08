@@ -30,6 +30,7 @@ async function run() {
         const db = client.db('assignment-10')
         const courseCollection = db.collection('courses');
         const categoryCollection = db.collection('categories');
+        const enrolementCollection = db.collection('enrolements');
 
         // GET: all the categories
         app.get('/categories', async (req, res) => {
@@ -53,7 +54,7 @@ async function run() {
             if (category) {
                 filter.category = category;
             }
-            if(email){
+            if (email) {
                 filter.ownerEmail = email;
             }
 
@@ -94,6 +95,35 @@ async function run() {
             res.send(result);
         })
 
+        // POST: My Enrolements
+        app.post('/enrolements', async (req, res) => {
+            const newEnrolement = req.body;
+            const result = await enrolementCollection.insertOne(newEnrolement);
+            res.send(result);
+        })
+
+        // GET: My Enrolements
+        app.get('/enrolements', async (req, res) => {
+            const { email } = req.query;
+
+            const filter = {};
+            
+            if (email) {
+                filter.enroledBy = email;
+            }
+
+            const cursor = enrolementCollection.find(filter);
+            const result = await cursor.toArray();
+            res.send(result);
+        })
+
+        // DELETE: delete an enrolement
+        app.delete('/enrolements/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await enrolementCollection.deleteOne(query);
+            res.send(result);
+        })
 
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
