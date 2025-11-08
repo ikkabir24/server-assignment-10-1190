@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config()
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -29,6 +29,14 @@ async function run() {
 
         const db = client.db('assignment-10')
         const courseCollection = db.collection('courses');
+        const categoryCollection = db.collection('categories');
+
+        // GET: all the categories
+        app.get('/categories', async (req, res) => {
+            const cursor = categoryCollection.find();
+            const result = await cursor.toArray();
+            res.send(result);
+        })
 
         // POST: new course publish (Create)
         app.post('/courses', async (req, res) => {
@@ -37,7 +45,43 @@ async function run() {
             res.send(result);
         })
 
+        // GET: get all the courses (Read)
+        app.get('/courses', async (req, res) => {
+            const { category } = req.query;
 
+            const filter = {};
+            if (category) {
+                filter.category = category;
+            }
+
+            const cursor = courseCollection.find(filter);
+            const result = await cursor.toArray();
+            res.send(result);
+        });
+
+
+
+        // PATCH: update an existing product (Update)
+        app.patch('/courses/:id', async (req, res) => {
+            const id = req.params.id;
+            const updatedCourse = req.body;
+            const query = { _id: new ObjectId(id) };
+
+            const update = {
+                $set: updatedCourse,
+            }
+
+            const result = await courseCollection.updateOne(query, update);
+            res.send(result);
+        })
+
+        // DELETE: delete a existing course (Delete)
+        app.delete('/courses/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await courseCollection.deleteOne(query);
+            res.send(result);
+        })
 
 
         await client.db("admin").command({ ping: 1 });
