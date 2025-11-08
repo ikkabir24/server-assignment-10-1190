@@ -47,17 +47,28 @@ async function run() {
 
         // GET: get all the courses (Read)
         app.get('/courses', async (req, res) => {
-            const { category } = req.query;
+            const { category, email } = req.query;
 
             const filter = {};
             if (category) {
                 filter.category = category;
+            }
+            if(email){
+                filter.ownerEmail = email;
             }
 
             const cursor = courseCollection.find(filter);
             const result = await cursor.toArray();
             res.send(result);
         });
+
+        // GET: individual courses
+        app.get('/courses/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await courseCollection.findOne(query)
+            res.send(result);
+        })
 
 
 
