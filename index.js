@@ -31,6 +31,7 @@ async function run() {
         const courseCollection = db.collection('courses');
         const categoryCollection = db.collection('categories');
         const enrolementCollection = db.collection('enrolements');
+        const topInstructors = db.collection('topInstructors');
 
         // GET: all the categories
         app.get('/categories', async (req, res) => {
@@ -39,8 +40,20 @@ async function run() {
             res.send(result);
         })
 
+        // GET: Popular courses
+        app.get('/popular', async (req, res) => {
+            const cursor = courseCollection.find().sort({ rating: -1 }).limit(6);
+            const result = await cursor.toArray();
+            res.send(result);
+        })
+
         // POST: new course publish (Create)
         app.post('/courses', async (req, res) => {
+            const newPost = req.body;
+            const existing = await courseCollection.findOne({ title: newPost.title });
+            if (existing) {
+                return res.status(409).send({ message: 'Course already exists.' });
+            }
             const newCourse = req.body;
             const result = await courseCollection.insertOne(newCourse);
             res.send(result);
@@ -107,7 +120,7 @@ async function run() {
             const { email } = req.query;
 
             const filter = {};
-            
+
             if (email) {
                 filter.enroledBy = email;
             }
@@ -124,6 +137,21 @@ async function run() {
             const result = await enrolementCollection.deleteOne(query);
             res.send(result);
         })
+
+        // GET: top instructors
+        app.get('/topInstructors', async (req, res) => {
+            const cursor = topInstructors.find();
+            const result = await cursor.toArray();
+            res.send(result);
+        })
+
+        // POST: top instructors
+        app.post('/topInstructors', async (req, res) => {
+            const newInstructor = req.body;
+            const result = await topInstructors.insertOne(newInstructor);
+            res.send(result);
+        })
+
 
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
