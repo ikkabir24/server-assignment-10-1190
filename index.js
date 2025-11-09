@@ -111,6 +111,14 @@ async function run() {
         // POST: My Enrolements
         app.post('/enrolements', async (req, res) => {
             const newEnrolement = req.body;
+
+            const existing = await enrolementCollection.findOne({ title: newEnrolement.title });
+
+            if(existing){
+                return res.status(409).send({ message: 'Course already exists.' });
+
+            }
+
             const result = await enrolementCollection.insertOne(newEnrolement);
             res.send(result);
         })
